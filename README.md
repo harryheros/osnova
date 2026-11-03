@@ -1,350 +1,94 @@
 # OsNova
 
-> Deterministic OS Reinstallation Engine for VPS and bare-metal servers.
+> Deterministic OS reinstallation for VPS and bare-metal servers.
 
 [![License](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](./LICENSE)
-[![Version](https://img.shields.io/badge/version-2.3.0-brightgreen.svg)](#)
-[![Platform](https://img.shields.io/badge/platform-VPS%20%7C%20Bare--metal-black.svg)](#)
+[![Version](https://img.shields.io/badge/version-2.3.0-brightgreen.svg)](./CHANGELOG.md)
 [![Arch](https://img.shields.io/badge/arch-x86__64-lightgrey.svg)](#)
 [![OS Support](https://img.shields.io/badge/support-Debian%2011%2F12%2F13%20%7C%20Ubuntu%2022.04%2F24.04%2F26.04-green.svg)](#)
-[![Language](https://img.shields.io/badge/language-Bash-informational.svg)](#)
+
+OsNova reinstalls Debian or Ubuntu from the running system, using only official upstream installers and images — no rescue ISO or recovery environment needed. Network settings are carried over, so the server comes back on the same IP.
+
+Use only on systems you own or are authorized to manage.
+
+> [!WARNING]
+> OsNova **erases the target disk**. All data on it is permanently destroyed. The target is the disk holding the running root filesystem; every disk is listed, with the target marked, before you confirm. Ctrl+C during the final countdown aborts safely.
 
 ---
 
-## Overview
+## Quick start
 
-OsNova is an automated Linux deployment and reinstallation tool for VPS and bare-metal systems.
-
-It provides a deterministic way to reinstall Debian or Ubuntu directly from the running system using official upstream resources, without requiring a rescue ISO or external recovery environment.
-
-OsNova prioritizes deterministic behavior, transparency, and minimal assumptions about the host environment.
-
-This project is intended for operators who need a fast, reproducible, infrastructure-oriented reinstall workflow.
-
-Use only on systems you own or are explicitly authorized to manage.
-
----
-
-## Quick Start
-
-Requires Bash, root privileges, and an x86_64 system running as a full virtual machine (KVM, Xen, VMware, Hyper-V) or on bare metal. OpenVZ/LXC containers cannot be reinstalled from inside.
-
-Review before execution:
+Requirements: root, Bash, x86_64, a full virtual machine (KVM, Xen, VMware, Hyper-V) or bare metal. OpenVZ / LXC containers cannot be reinstalled from inside.
 
 ```bash
+# Review first
 curl -fsSL -o reinstall.sh https://raw.githubusercontent.com/harryheros/osnova/main/os/reinstall.sh
 less reinstall.sh
+
+# Debian 13 (default)
+bash reinstall.sh
+
+# Ubuntu 24.04 with a password and SSH port
+bash reinstall.sh -u 24 -p "YourPassword" --port 2222
 ```
 
-Default installation (Debian 13):
-
-```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/harryheros/osnova/main/os/reinstall.sh)
-```
-
-Debian 13 with custom password and SSH port:
-
-```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/harryheros/osnova/main/os/reinstall.sh) -d 13 -p "YourPassword" --port 2222
-```
-
-Ubuntu 24.04:
-
-```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/harryheros/osnova/main/os/reinstall.sh) -u 24
-```
-
-Ubuntu 26.04:
-
-```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/harryheros/osnova/main/os/reinstall.sh) -u 26
-```
-
-Ubuntu 22.04:
-
-```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/harryheros/osnova/main/os/reinstall.sh) -u 22
-```
-
-Custom DNS example:
-
-```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/harryheros/osnova/main/os/reinstall.sh) -u 24 --dns "1.1.1.1 9.9.9.9"
-```
-
-Choose the target disk explicitly (servers with several disks):
-
-```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/harryheros/osnova/main/os/reinstall.sh) -d 13 --disk /dev/vda
-```
-
-Skip confirmation prompt (for automation):
-
-```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/harryheros/osnova/main/os/reinstall.sh) -u 24 -p "SecurePassword" --port 2222 --force
-```
-
-Full example:
-
-```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/harryheros/osnova/main/os/reinstall.sh) -u 24 -p "SecurePassword" --port 2222 --dns "8.8.8.8 8.8.4.4" --force
-```
+One-line form: `bash <(curl -fsSL https://raw.githubusercontent.com/harryheros/osnova/main/os/reinstall.sh) -d 13`
 
 ---
 
-## Data Loss Warning
+## Options
 
-> ⚠️ This tool will completely erase the primary disk and reinstall the operating system.
->
-> All existing data on the target disk will be permanently destroyed.
->
-> Do not run it unless you fully understand the consequences.
->
-> Starting from v2.0.0, OsNova requires explicit confirmation before proceeding. Use `--force` to skip this prompt in automated workflows.
->
-> The target is the disk that holds the running system's root filesystem; all disks are listed with the target marked before you confirm. Ctrl+C during the final countdown aborts safely on both paths.
-
----
-
-## Features
-
-- Unified Debian and Ubuntu reinstall workflow  
-- Works on both BIOS and UEFI systems  
-- Cross-distribution execution support  
-- Uses official upstream installer or image resources  
-- Debian installation via official netboot installer and preseed automation  
-- Ubuntu deployment via official cloud image and direct disk write  
-- Target disk derived from the running root filesystem (through LVM/RAID/Btrfs), overridable with `--disk`  
-- Network configuration bound to the NIC's MAC address (safe on multi-NIC hosts and when interface names change)  
-- On-link gateway routing whenever the gateway is outside the subnet (not only /32 and /128)  
-- Pre-flight checks: container detection, /boot and /var/tmp space, disk size, low-memory warning  
-- Static IPv4 migration from the current system  
-- Optional IPv6 carry-over when detected  
-- IPv4 /32 and IPv6 /128 on-link route handling  
-- Debian networking configured with systemd-networkd  
-- Ubuntu networking configured with netplan rendered by systemd-networkd  
-- Custom DNS server support via --dns  
-- Automatic SSH root login configuration  
-- Custom SSH port support with reliable fallback injection  
-- Automatic random root password generation when -p is not provided  
-- Password validation to prevent shell-unsafe characters  
-- Built-in FQ and BBR network optimization  
-- Ubuntu cloud image verified against Ubuntu's published SHA256SUMS  
-- Ubuntu path works without the nbd kernel module (loop-device fallback)  
-- Ubuntu EFI fallback boot path repair  
-- CentOS 7 Vault fallback for legacy dependency installation  
-- Works from RHEL-family hosts (CentOS/Rocky/Alma): correct GRUB config paths, XFS/Btrfs/LVM /boot  
-- Debian 11 automatically falls back to archive.debian.org once removed from the live mirrors  
-- Interactive confirmation prompt before disk erasure  
-- Root privilege and architecture pre-checks  
-- Idempotent GRUB configuration  
-
----
-
-## Supported Operating Systems
-
-Debian:  
-- Debian 13 (Trixie) — default  
-- Debian 12 (Bookworm)  
-- Debian 11 (Bullseye) — end of life since 2026-08-31, no security updates  
-
-Ubuntu:  
-- Ubuntu 26.04 LTS (Resolute)  
-- Ubuntu 24.04 LTS (Noble) — default  
-- Ubuntu 22.04 LTS (Jammy)  
-
----
-
-## Installation Architecture
-
-Debian path:  
-1. Pre-check root privilege and x86_64 architecture  
-2. Detect current disk and network configuration  
-3. Confirm with operator before proceeding  
-4. Download official Debian netboot installer  
-5. Inject preseed configuration and post-install script into initrd  
-6. Create a temporary GRUB boot entry  
-7. Reboot into the automated Debian installer  
-
-Ubuntu path:  
-1. Pre-check root privilege and x86_64 architecture  
-2. Detect current disk and network configuration  
-3. Confirm with operator before proceeding  
-4. Download official Ubuntu cloud image and verify it against SHA256SUMS  
-5. Mount the image through qemu-nbd (or loop devices when nbd is unavailable)  
-6. Configure root password, SSH, sysctl, netplan, cloud-init seed, and DNS  
-7. Repair EFI fallback boot path if needed  
-8. Show the summary and countdown (Ctrl+C still aborts safely)  
-9. Remount the running system read-only, write the image to the target disk, reboot immediately  
-
----
-
-## Parameters
-
-| Parameter | Description |
+| Option | Description |
 |---|---|
-| `-d [11\|12\|13]` | Install Debian (default: 13) |
-| `-u [22\|24\|26]` | Install Ubuntu (default: 24) |
-| `-p PASSWORD` | Set root password |
-| `-port PORT`, `--port PORT` | Set SSH port (default: 22) |
-| `--dns "IP1 IP2"` | Set DNS servers (default: 8.8.8.8 8.8.4.4); IPv4 or IPv6, validated |
-| `--disk /dev/XXX` | Target disk (default: the disk holding the root filesystem) |
-| `-f`, `--force` | Skip confirmation prompt |
-| `-v`, `--version` | Show version info |
-| `-h`, `--help` | Show help |
+| `-d 11\|12\|13` | Install Debian (default: 13) |
+| `-u 22\|24\|26` | Install Ubuntu (default: 24) |
+| `-p PASSWORD` | Root password (default: a random 20-character password, shown before reboot) |
+| `--port PORT` | SSH port (default: 22) |
+| `--dns "IP1 IP2"` | DNS servers, IPv4 or IPv6 (default: `8.8.8.8 8.8.4.4`) |
+| `--disk /dev/XXX` | Target disk (default: the disk holding the root filesystem; required if root spans several disks) |
+| `-f`, `--force` | Skip the confirmation prompt |
+| `-v`, `--version` / `-h`, `--help` | Version / help |
+
+Example: `bash reinstall.sh -u 24 -p "SecurePassword" --port 2222 --dns "1.1.1.1 9.9.9.9" --disk /dev/vda --force`
+
+**Passwords** may use `A-Z a-z 0-9 ! @ # % ^ * _ + = . -`. Characters that break shell or installer parsing (`` $ ` " ' \ ( ) { } | & ; < > ~ `` and spaces) are rejected.
 
 ---
 
-## Password Rules
+## Supported systems
 
-If `-p` is not provided, a 20-character random password is generated automatically.
+| Debian | Ubuntu |
+|---|---|
+| 13 Trixie — default | 26.04 LTS Resolute |
+| 12 Bookworm (LTS) | 24.04 LTS Noble |
+| 11 Bullseye — end of life, no security updates | 22.04 LTS Jammy |
 
-Allowed characters: `A-Z a-z 0-9 ! @ # % ^ * _ + = . -`
-
-Characters that could interfere with shell expansion or preseed parsing are rejected:  
-`` $ ` " ' \ spaces ( ) { } | & ; < > ~ ``
-
----
-
-## Default Behavior
-
-- A confirmation prompt is displayed before any destructive action (skip with `--force`)  
-- If -p is not provided, a random root password is generated automatically  
-- The generated password is displayed before reboot and must be saved by the operator  
-- SSH is configured to allow root login and password authentication  
-- The disk holding the current root filesystem is the installation target (use `--disk` to override; required when root spans several disks)  
-- Current network settings are reused for static configuration  
-- Default DNS servers are 8.8.8.8 and 8.8.4.4 unless overridden  
-- If --dns is provided, those DNS servers are written into the installed system  
-- IPv6 DNS servers are dropped when the host has no working IPv6  
+Works from Debian, Ubuntu and RHEL-family hosts (CentOS, Rocky, Alma), on BIOS and UEFI.
 
 ---
 
-## Network Configuration
+## How it works
 
-Debian:  
-OsNova installs a static systemd-networkd configuration matched to the NIC's MAC address, using the detected IPv4 settings, optional IPv6 settings, and the selected DNS servers. The gateway is routed on-link whenever it lies outside the assigned subnet (including /32 and /128). If IPv6 was detected but unreachable, it is disabled in the installed system as well.
+**Debian**: downloads the official netboot installer, adds an automated preseed, boots into it once through a temporary GRUB entry, and installs unattended.
 
-Ubuntu:  
-OsNova installs a static netplan configuration (rendered by systemd-networkd) matched to the NIC's MAC address, disables cloud-init network generation, and writes the selected DNS servers into the installed system. On-link routing and IPv6 handling follow the same rules as the Debian path.
+**Ubuntu**: downloads the official cloud image, verifies it against Ubuntu's `SHA256SUMS`, configures it (password, SSH, network, DNS), then writes it to disk and reboots.
 
----
+Both paths:
 
-## Tested Environments
+- Reuse the current static IPv4, and IPv6 when it works; broken IPv6 is disabled instead of hanging the install.
+- Bind the network configuration to the NIC's MAC address, safe on multi-NIC hosts.
+- Route the gateway on-link when it lies outside the subnet (e.g. /32, /128).
+- Enable root SSH login with password, and FQ + BBR.
+- Check free space, disk size and memory before asking for confirmation.
 
-- KVM virtual machines  
-- Common cloud VPS providers  
-- BIOS systems  
-- UEFI systems  
+Tested on KVM virtual machines and common cloud VPS providers, BIOS and UEFI.
 
----
-
-## Intended Use
-
-OsNova is intended for:  
-
-- VPS reprovisioning  
-- Bare-metal operating system replacement  
-- Clean system redeployment  
-- Infrastructure rebuild workflows  
-- Deterministic Debian and Ubuntu reinstall operations  
-
-It is not designed as a rescue panel replacement or a consumer desktop installer.  
-
----
-
-## Changelog
-
-### v2.3.0
-
-Fixes for installations that failed on some providers / source systems:
-
-- **Wrong disk could be erased**: the target used to be the first non-removable disk in name order (hd*, nvme*, sd*, vd*), so a VPS booting from vda with an extra NVMe/sd* data disk had the *data disk* overwritten. The target is now derived from the running root filesystem (partitions, LVM, RAID, LUKS, Btrfs subvolumes); `--disk` overrides it, and roots spanning several disks require it. All disks are shown with the target marked before confirmation.
-- **Ubuntu: no network after install**: the netplan file used `match: type: ethernet`, but netplan's `match` only accepts `name`, `macaddress` and `driver` and rejects unknown keys — with the other netplan files deleted and cloud-init networking disabled, nothing configured the NIC. Now matched by MAC address.
-- **Multi-NIC hosts**: both paths applied the static IP to *every* Ethernet NIC (`Type=ether`), creating duplicate addresses. The configuration is now bound to the NIC's MAC address (falling back to all Ethernet NICs only when the source interface is not a physical NIC).
-- **RHEL-family source systems (CentOS/Rocky/Alma)**: the GRUB entry was generated into `/boot/grub/grub.cfg`, which these systems do not read, so the host simply rebooted into the old OS. The config GRUB actually reads is regenerated (including the ESP on RHEL 7/8 UEFI), and the script verifies the entry exists before rebooting. The boot entry also loads XFS, Btrfs, LVM and RAID modules.
-- **Gateways outside the subnet**: on-link routing was only used for /32 and /128; it is now used whenever the gateway lies outside the assigned subnet.
-- **Containers**: OpenVZ/LXC/Docker are detected up front with a clear message instead of failing half-way.
-- **Hosts without the nbd module** (e.g. Debian's cloud kernel) or without `qemu-nbd` (RHEL's qemu-img package): the Ubuntu path falls back to a raw image on loop devices. CentOS 7 now installs `qemu-img` and `gdisk`.
-- **Password check** no longer depends on `grep -P`, which minimal systems lack (every password was rejected there).
-- **Broken IPv6** is now disabled in the installed system too (previously only in the installer; the system picked it back up via router advertisements). IPv6 DNS servers are dropped when there is no working IPv6.
-- **Route parsing** uses the `via`/`dev` keywords instead of column positions; the IPv6 default route must be on the same interface; temporary/deprecated IPv6 addresses are ignored; link-local gateways are probed with an interface scope.
-
-Safety:
-
-- **Ubuntu**: the image is now written only after the summary and countdown, with the running filesystem remounted read-only first and an immediate reboot afterwards. Previously the old system kept running for the countdown on top of the freshly written image.
-- **Debian**: Ctrl+C during the countdown now restores normal booting. Previously the installer entry stayed the GRUB default, so the next reboot — whenever it happened — would start the installer and wipe the disk.
-- Pre-flight checks before confirmation: free space in /boot (Debian) and /var/tmp (Ubuntu), disk size (and exact image size for Ubuntu), low-memory warning for the Debian installer.
-- `--dns` values are validated.
-
-Updates:
-
-- Ubuntu 26.04 LTS (`-u 26`).
-- Debian default changed from 12 to 13 (current stable; 12 is in LTS). Use `-d 12` for the previous default.
-- Debian 11 reached end of life on 2026-08-31: a warning is shown, and the installer switches to archive.debian.org automatically once the release is removed from the live mirrors.
-- Ubuntu images are verified against Ubuntu's published SHA256SUMS.
-- New option `--disk /dev/XXX`.
-
-### v2.2.0
-
-- Fixed Debian installer hang at "Loading additional components / Retrieving *.udeb" on hosts with broken IPv6: the script now probes actual IPv6 reachability and, if an address is present but unroutable (common on budget VPS), disables IPv6 for both the installer (`ipv6.disable=1` on the kernel cmdline) and the installed system — degrading cleanly to IPv4-only. Hosts with working IPv6 keep full dual-stack; IPv4-only hosts are unaffected
-- Fixed Debian installer hang by adding an explicit mirror block (`mirror/http/hostname`, `directory`, `suite`) to both the preseed and the kernel command line — previously no mirror was specified, so the installer had no host to fetch udebs from
-- Fixed `netcfg/get_nameservers` passing a space-separated DNS list (d-i treats it as a single token, breaking udeb-stage DNS); the installer now uses the first DNS, while the full list is still written into the installed system
-- Added `netcfg/get_hostname` and `netcfg/get_domain` to prevent hidden prompts when DNS is unstable
-- Made `preseed/late_command` robust: searches multiple known locations for `post-install.sh`, uses `&&` chaining so failures surface, and logs to `/var/log/osnova-postinstall.log` in the target system
-- post-install.sh is now staged in multiple initrd locations so it survives regardless of d-i build layout
-- Added `partman/early_command` to wipe pre-existing LVM/MD/partition signatures (`vgchange`, `pvremove`, `mdadm --stop`, `wipefs`) plus `partman-lvm/device_remove_lvm` and `partman-md/device_remove_md`, preventing silent partitioner hangs on previously-provisioned disks
-- Switched GRUB default selection to the canonical `GRUB_DEFAULT=saved` + `grub-set-default`/`grub-reboot` method and forced `GRUB_DISABLE_SUBMENU=y`, so the installer entry boots reliably even when GRUB builds a submenu
-- No user-facing CLI changes — fully compatible with v2.1.0 invocation
-
-### v2.1.0
-
-- Fixed network detection on hosts with multi-IP interfaces (cloud VPS with main IP + alias addresses)
-- Fixed mixed IPv4/IPv6 default routes pointing at different interfaces (`ip -4` / `ip -6` now used explicitly)
-- Fixed disk detection to use awk exact-equality on the TYPE column instead of substring match
-- Added wget `--tries=3 --timeout=30/60` to both Debian netboot and Ubuntu cloud image downloads
-- Added qcow2 format pre-check via `qemu-img info` (catches HTML error pages saved as `.img`)
-- Ubuntu image download no longer uses `--continue` — stale images from a different release URL are removed first
-- Added IPv4 default-route guard: script now aborts cleanly if no default route is detected
-- Added qemu-nbd settle delay between disconnect and connect
-- Refactored systemd-networkd IPv6 block to use a single pre-built string instead of nested heredoc-in-command-substitution
-- No user-facing CLI changes — fully compatible with v2.0.0 invocation
-
-### v2.0.0
-
-- Added root privilege and x86_64 architecture pre-checks  
-- Added interactive confirmation prompt before disk erasure (`--force` to skip)  
-- Added `--version` / `-v` parameter  
-- Added password validation to reject shell-unsafe characters  
-- Upgraded random password generation to 20 characters with symbols  
-- Fixed preseed password injection to prevent shell expansion issues  
-- Fixed SSH port configuration to reliably write Port even when missing from sshd_config  
-- Fixed GRUB_DISABLE_OS_PROBER repeated append (now idempotent)  
-- Fixed disk detection fallback to exclude loop, nbd, ram, and zram devices  
-- Added Ubuntu cloud image integrity verification via qemu-img check  
-- Added IPv6 /128 on-link route support for both Debian and Ubuntu paths  
-- Improved cleanup trap to cover HUP/PIPE signals and temporary work directory  
-- Debian BBR configuration moved to dedicated sysctl.d file  
-- Debian SSH configuration now uses sshd_config.d override for reliability  
-
-### v1.0.0
-
-- Initial release  
+Release history: [CHANGELOG.md](./CHANGELOG.md).
 
 ---
 
 ## License
 
-GPL-3.0  
-
-OsNova is distributed under GPL-3.0.  
-All components comply with upstream licensing requirements of the Linux ecosystem.
-
----
-
-## Philosophy
-
-Minimal assumptions. Direct execution. Reproducible results.
----
+[GPL-3.0](./LICENSE).
 
 Part of the [Nova infrastructure toolkit](https://github.com/harryheros).
