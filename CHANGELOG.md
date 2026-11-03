@@ -1,5 +1,10 @@
 # OsNova Changelog
 
+### v2.3.1
+
+- Shorter README; the release history moved to `CHANGELOG.md`.
+- No changes to installation behaviour.
+
 ### v2.3.0
 
 Fixes for installations that failed on some providers / source systems:

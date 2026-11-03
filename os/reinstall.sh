@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ==============================================================================
 # Project: OsNova - System Deployment & Reinstallation Engine
-# Version: 2.3.0
+# Version: 2.3.1
 # Description: BIOS + UEFI compatible automated network installer
 #              for Debian and Ubuntu systems on VPS and bare-metal servers.
 #
@@ -23,7 +23,7 @@ OS_TYPE="debian"
 RELEASE=""
 SSH_PORT="22"
 ROOT_PASS=""
-VERSION="2.3.0"
+VERSION="2.3.1"
 TARGET_DISK=""
 PASSWORD_WAS_GENERATED=0
 DNS_SERVERS="8.8.8.8 8.8.4.4"

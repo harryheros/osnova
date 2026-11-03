@@ -3,7 +3,7 @@
 > Deterministic OS reinstallation for VPS and bare-metal servers.
 
 [![License](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](./LICENSE)
-[![Version](https://img.shields.io/badge/version-2.3.0-brightgreen.svg)](./CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-2.3.1-brightgreen.svg)](./CHANGELOG.md)
 [![Arch](https://img.shields.io/badge/arch-x86__64-lightgrey.svg)](#)
 [![OS Support](https://img.shields.io/badge/support-Debian%2011%2F12%2F13%20%7C%20Ubuntu%2022.04%2F24.04%2F26.04-green.svg)](#)
 
