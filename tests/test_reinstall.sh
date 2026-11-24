@@ -123,11 +123,39 @@ README="$ROOT/README.md"
 eq "$(head -n 3 "$README" | cut -c1-2)" "$(printf '# \n\n> ')" "README header"
 yes_ grep -qx '# OsNova' "$README"
 no_  grep -q '<div' "$README"
-# Tables only for short, grid-like data: a long cell leaves wide blank areas
-# in the other columns, so longer text goes in lists.
-LONG="$(awk '/^```/{c=!c} !c && /^\|/ && !/^\|[-|: ]+\|$/' "$README" | tr -d '`*' \
-    | awk -F' \\| ' '{for (i = 1; i <= NF; i++) { gsub(/^\|? *| *\|?$/, "", $i); if (length($i) > 40) print $i }}')"
-eq "$LONG" "" "README table cells longer than 40 characters"
+# A table reads well when its cells are short and alike in length: one long
+# cell widens its column and leaves blank space in every other row. So no
+# cell over 60 characters, and in a column whose longest cell is over 30, the
+# typical (median) cell is at least 40% of it.
+UNEVEN="$(awk '
+    function check(   c, i, j, n, tmp, longest, median) {
+        for (c = 1; c <= ncol; c++) {
+            n = 0
+            for (i = 1; i <= nrow; i++) if ((i, c) in len) v[++n] = len[i, c]
+            for (i = 1; i <= n; i++) for (j = i + 1; j <= n; j++) if (v[j] < v[i]) { tmp = v[i]; v[i] = v[j]; v[j] = tmp }
+            if (n == 0) continue
+            longest = v[n]; median = v[int(n / 2) + 1]
+            if (longest > 60 || (longest > 30 && median < 0.4 * longest)) print "table at line " start ", column " c
+        }
+        nrow = 0; delete len
+    }
+    /^```/ { code = !code }
+    !code && /^\|/ {
+        if (nrow == 0 && !intable) { start = NR; header = 1 }
+        intable = 1
+        if ($0 ~ /^\|[-|: ]+\|$/) next
+        if (header) { header = 0; ncol = split($0, h, / \| /); next }
+        line = $0; gsub(/`|\*/, "", line); gsub(/\\\|/, "!", line)
+        k = split(line, cells, / \| /)
+        if (k != ncol) next
+        nrow++
+        for (c = 1; c <= k; c++) { x = cells[c]; gsub(/^\| *| *\|$|^ +| +$/, "", x); len[nrow, c] = length(x) }
+        next
+    }
+    intable { check(); intable = 0 }
+    END { if (intable) check() }
+' "$README")"
+eq "$UNEVEN" "" "README tables with uneven cells"
 yes_ grep -q 'img.shields.io/github/v/release/harryheros/osnova' "$README"
 no_  grep -q 'img.shields.io/badge/version-' "$README"   # a hand-written badge goes stale
 no_  grep -qi 'novaod' "$README"                         # a free tool: no commercial licensing

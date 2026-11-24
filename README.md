@@ -42,14 +42,18 @@ bash <(curl -fsSL https://raw.githubusercontent.com/harryheros/osnova/main/os/re
 
 ## Options
 
-- `-d 11|12|13`: install Debian (default 13).
-- `-u 22|24|26`: install Ubuntu (default 24).
-- `-p PASSWORD`: root password. Default: a random 20-character password, shown before reboot.
-- `--port PORT`: SSH port (default 22).
-- `--dns "IP1 IP2"`: DNS servers, IPv4 or IPv6 (default `8.8.8.8 8.8.4.4`).
-- `--disk /dev/XXX`: target disk. Default: the disk holding the root filesystem; required if root spans several disks.
-- `-f`, `--force`: skip the confirmation prompt.
-- `-v`, `--version` and `-h`, `--help`: version and help.
+| Option | What it sets | Default |
+|---|---|---|
+| `-d 11\|12\|13` | Install Debian | 13 |
+| `-u 22\|24\|26` | Install Ubuntu | 24 |
+| `-p PASSWORD` | Root password | Random, 20 characters |
+| `--port PORT` | SSH port | 22 |
+| `--dns "IP1 IP2"` | DNS servers, IPv4 or IPv6 | `8.8.8.8 8.8.4.4` |
+| `--disk /dev/XXX` | Target disk | The disk holding `/` |
+| `-f`, `--force` | Skip the confirmation prompt | — |
+| `-v`, `-h` | Show the version, or help | — |
+
+A generated password is shown before the reboot. `--disk` is required when the root filesystem spans several disks.
 
 Example:
 
