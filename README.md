@@ -2,7 +2,7 @@
 
 > Deterministic OS reinstallation for VPS and bare-metal servers.
 
-[![Version](https://img.shields.io/github/v/release/harryheros/osnova?label=version&color=blue)](https://github.com/harryheros/osnova/releases)
+[![Version](https://img.shields.io/badge/version-v2.3.2-blue.svg)](https://github.com/harryheros/osnova/releases)
 [![License](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](#license)
 [![CI](https://github.com/harryheros/osnova/actions/workflows/ci.yml/badge.svg)](https://github.com/harryheros/osnova/actions/workflows/ci.yml)
 [![Arch](https://img.shields.io/badge/arch-x86__64-lightgrey.svg)](#quick-start)

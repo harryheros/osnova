@@ -156,8 +156,10 @@ UNEVEN="$(awk '
     END { if (intable) check() }
 ' "$README")"
 eq "$UNEVEN" "" "README tables with uneven cells"
-yes_ grep -q 'img.shields.io/github/v/release/harryheros/osnova' "$README"
-no_  grep -q 'img.shields.io/badge/version-' "$README"   # a hand-written badge goes stale
+# A static version badge, updated with each release: badges that make
+# shields.io query GitHub on every view showed as broken images on GitHub.
+yes_ grep -qF "img.shields.io/badge/version-v${V}-blue" "$README"
+no_  grep -q 'img.shields.io/github/' "$README"
 no_  grep -qi 'novaod' "$README"                         # a free tool: no commercial licensing
 eq "$(tail -n 1 "$README")" "Part of the [Nova infrastructure toolkit](https://github.com/harryheros)." "README last line"
 # Every #anchor link points at a heading (GitHub's slug: lowercase, spaces to
