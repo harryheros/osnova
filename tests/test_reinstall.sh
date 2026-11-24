@@ -118,7 +118,16 @@ eq "$(sed -n 's/^# Version: //p' "$SCRIPT")" "$V" "header version"
 
 # --- README -------------------------------------------------------------------
 README="$ROOT/README.md"
-eq "$(head -n 3 "$README")" "$(printf '<div align="center">\n\n# OsNova')" "README header"
+# Title, a one-line blockquote, then badges: aligned left, as the owner
+# prefers (a centered header was tried and dropped).
+eq "$(head -n 3 "$README" | cut -c1-2)" "$(printf '# \n\n> ')" "README header"
+yes_ grep -qx '# OsNova' "$README"
+no_  grep -q '<div' "$README"
+# Tables only for short, grid-like data: a long cell leaves wide blank areas
+# in the other columns, so longer text goes in lists.
+LONG="$(awk '/^```/{c=!c} !c && /^\|/ && !/^\|[-|: ]+\|$/' "$README" | tr -d '`*' \
+    | awk -F' \\| ' '{for (i = 1; i <= NF; i++) { gsub(/^\|? *| *\|?$/, "", $i); if (length($i) > 40) print $i }}')"
+eq "$LONG" "" "README table cells longer than 40 characters"
 yes_ grep -q 'img.shields.io/github/v/release/harryheros/osnova' "$README"
 no_  grep -q 'img.shields.io/badge/version-' "$README"   # a hand-written badge goes stale
 no_  grep -qi 'novaod' "$README"                         # a free tool: no commercial licensing

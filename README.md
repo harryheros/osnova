@@ -1,8 +1,6 @@
-<div align="center">
-
 # OsNova
 
-**Deterministic OS reinstallation for VPS and bare-metal servers.**
+> Deterministic OS reinstallation for VPS and bare-metal servers.
 
 [![Version](https://img.shields.io/github/v/release/harryheros/osnova?label=version&color=blue)](https://github.com/harryheros/osnova/releases)
 [![License](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](#license)
@@ -11,8 +9,6 @@
 [![Systems](https://img.shields.io/badge/installs-Debian%2011%2F12%2F13%20%7C%20Ubuntu%2022.04%2F24.04%2F26.04-green.svg)](#supported-systems)
 
 [Quick start](#quick-start) · [Options](#options) · [Supported systems](#supported-systems) · [How it works](#how-it-works) · [Changelog](./CHANGELOG.md) · [License](#license)
-
-</div>
 
 OsNova reinstalls Debian or Ubuntu from the running system, using only official upstream installers and images — no rescue ISO or recovery environment needed. Network settings are carried over, so the server comes back on the same IP.
 
@@ -27,7 +23,8 @@ Requirements: root, Bash, x86_64, a full virtual machine (KVM, Xen, VMware, Hype
 
 ```bash
 # Review first
-curl -fsSL -o reinstall.sh https://raw.githubusercontent.com/harryheros/osnova/main/os/reinstall.sh
+curl -fsSL -o reinstall.sh \
+  https://raw.githubusercontent.com/harryheros/osnova/main/os/reinstall.sh
 less reinstall.sh
 
 # Debian 13 (default)
@@ -37,32 +34,36 @@ bash reinstall.sh
 bash reinstall.sh -u 24 -p "YourPassword" --port 2222
 ```
 
-One-line form: `bash <(curl -fsSL https://raw.githubusercontent.com/harryheros/osnova/main/os/reinstall.sh) -d 13`
+One-line form, without saving the script first:
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/harryheros/osnova/main/os/reinstall.sh) -d 13
+```
 
 ## Options
 
-| Option | Description |
-|---|---|
-| `-d 11\|12\|13` | Install Debian (default: 13) |
-| `-u 22\|24\|26` | Install Ubuntu (default: 24) |
-| `-p PASSWORD` | Root password (default: a random 20-character password, shown before reboot) |
-| `--port PORT` | SSH port (default: 22) |
-| `--dns "IP1 IP2"` | DNS servers, IPv4 or IPv6 (default: `8.8.8.8 8.8.4.4`) |
-| `--disk /dev/XXX` | Target disk (default: the disk holding the root filesystem; required if root spans several disks) |
-| `-f`, `--force` | Skip the confirmation prompt |
-| `-v`, `--version` / `-h`, `--help` | Version / help |
+- `-d 11|12|13`: install Debian (default 13).
+- `-u 22|24|26`: install Ubuntu (default 24).
+- `-p PASSWORD`: root password. Default: a random 20-character password, shown before reboot.
+- `--port PORT`: SSH port (default 22).
+- `--dns "IP1 IP2"`: DNS servers, IPv4 or IPv6 (default `8.8.8.8 8.8.4.4`).
+- `--disk /dev/XXX`: target disk. Default: the disk holding the root filesystem; required if root spans several disks.
+- `-f`, `--force`: skip the confirmation prompt.
+- `-v`, `--version` and `-h`, `--help`: version and help.
 
-Example: `bash reinstall.sh -u 24 -p "SecurePassword" --port 2222 --dns "1.1.1.1 9.9.9.9" --disk /dev/vda --force`
+Example:
+
+```bash
+bash reinstall.sh -u 24 -p "SecurePassword" --port 2222 \
+  --dns "1.1.1.1 9.9.9.9" --disk /dev/vda --force
+```
 
 **Passwords** may use `A-Z a-z 0-9 ! @ # % ^ * _ + = . -`. Characters that break shell or installer parsing (`` $ ` " ' \ ( ) { } | & ; < > ~ `` and spaces) are rejected.
 
 ## Supported systems
 
-| Debian | Ubuntu |
-|---|---|
-| 13 Trixie — default | 26.04 LTS Resolute |
-| 12 Bookworm (LTS) | 24.04 LTS Noble |
-| 11 Bullseye — end of life, no security updates | 22.04 LTS Jammy |
+- **Debian**: 13 Trixie (default), 12 Bookworm (LTS), 11 Bullseye (end of life, no security updates).
+- **Ubuntu**: 26.04 LTS Resolute, 24.04 LTS Noble (default), 22.04 LTS Jammy.
 
 Works from Debian, Ubuntu and RHEL-family hosts (CentOS, Rocky, Alma), on BIOS and UEFI.
 
