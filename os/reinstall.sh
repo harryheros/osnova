@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ==============================================================================
 # Project: OsNova - System Deployment & Reinstallation Engine
-# Version: 2.3.1
+# Version: 2.3.2
 # Description: BIOS + UEFI compatible automated network installer
 #              for Debian and Ubuntu systems on VPS and bare-metal servers.
 #
@@ -23,7 +23,7 @@ OS_TYPE="debian"
 RELEASE=""
 SSH_PORT="22"
 ROOT_PASS=""
-VERSION="2.3.1"
+VERSION="2.3.2"
 TARGET_DISK=""
 PASSWORD_WAS_GENERATED=0
 DNS_SERVERS="8.8.8.8 8.8.4.4"
@@ -69,7 +69,9 @@ is_ipv6() {
 
 # --- IPv4 / IPv6 arithmetic ---------------------------------------------------
 ipv4_to_int() {
-    local IFS=.; set -- $1
+    local IFS=.
+    # shellcheck disable=SC2086  # split on "." on purpose
+    set -- $1
     echo $(( ($1 << 24) + ($2 << 16) + ($3 << 8) + $4 ))
 }
 
@@ -194,10 +196,12 @@ detect_root_disk() {
 
 # Legacy heuristic (v2.2), only used when the root disk cannot be derived.
 detect_disk_fallback() {
-    local dev
-    if [ -d /sys/block ]; then
-        for dev in $(ls /sys/block | grep -E '^(sd|vd|xvd|nvme|hd)'); do
-            if [ -f "/sys/block/$dev/removable" ] && [ "$(cat "/sys/block/$dev/removable")" = "0" ]; then
+    local dev sys="${OSNOVA_SYS_BLOCK:-/sys/block}"   # override for tests only
+    if [ -d "$sys" ]; then
+        for dev in "$sys"/*; do
+            dev="${dev##*/}"
+            case "$dev" in sd*|vd*|xvd*|nvme*|hd*) ;; *) continue ;; esac
+            if [ -f "$sys/$dev/removable" ] && [ "$(cat "$sys/$dev/removable")" = "0" ]; then
                 echo "/dev/$dev"; return 0
             fi
         done
@@ -225,7 +229,21 @@ detect_nic_mac() {   # IFACE
     return 1
 }
 
+# Write an image over the whole disk. The source is a file on the very disk
+# being overwritten, so it must be read from memory, not from blocks the
+# write has already replaced. A buffered write sends gigabytes through the
+# page cache and can push the source out of memory on a small host; direct
+# I/O (-t none) keeps the write out of the cache. The source is read once
+# beforehand so it starts out cached. Disks that refuse direct I/O get the
+# buffered write.
+write_image() {   # SRC FMT DISK
+    [ "$2" = "qcow2" ] && { cat "$1" >/dev/null 2>&1 || true; }
+    qemu-img convert -f "$2" -O raw -t none -p "$1" "$3" \
+        || qemu-img convert -f "$2" -O raw -p "$1" "$3"
+}
+
 # Allow tests to load only the helpers above.
+# shellcheck disable=SC2317  # exit is reached when the script is executed
 if [ "${OSNOVA_LIB_ONLY:-0}" = "1" ]; then return 0 2>/dev/null || exit 0; fi
 
 # --- Help ---
@@ -902,6 +920,7 @@ d-i apt-setup/services-select multiselect
 d-i apt-setup/check_valid_until boolean false
 EOF
     fi
+    # shellcheck disable=SC2129  # the preseed is built up in readable parts
     cat >> "${WORKDIR}/preseed.cfg" <<EOF
 
 tasksel tasksel/first multiselect standard, ssh-server
@@ -949,12 +968,11 @@ EOF
     cat >> "${WORKDIR}/preseed.cfg" <<'PRESEEDTAILEOF'
 d-i finish-install/reboot_in_progress note
 
-# late_command runs in the d-i environment (not the target). We search a few
-# known locations for post-install.sh because where it survives depends on the
-# d-i build: initrd root (/), the preseed dir, or /var/lib/preseed. Chaining
-# with && (not ;) so a copy/run failure is visible in /var/log/syslog rather
-# than silently rebooting into a half-configured network. All output is logged
-# to the target so it can be inspected post-boot if SSH still fails.
+# late_command runs in the d-i environment (not the target), where the
+# initrd root is /, so post-install.sh is at /post-install.sh (a copy is
+# also kept in /preseed). Chaining with && (not ;) makes a copy/run failure
+# visible in the installer's /var/log/syslog rather than silently rebooting
+# into a half-configured network.
 d-i preseed/late_command string \
     mkdir -p /target/tmp; \
     cp /post-install.sh /target/tmp/post-install.sh && \
@@ -974,8 +992,8 @@ PRESEEDTAILEOF
     chmod +x ./post-install.sh ./preseed/post-install.sh
 
     rm -f /boot/vmlinuz-*osnova /boot/initrd-*osnova.gz 2>/dev/null
-    find . | cpio -H newc -o 2>/dev/null | gzip -1 > /boot/initrd-debian${RELEASE}-osnova.gz
-    cp "${WORKDIR}/debian-installer/amd64/linux" /boot/vmlinuz-debian${RELEASE}-osnova
+    find . | cpio -H newc -o 2>/dev/null | gzip -1 > "/boot/initrd-debian${RELEASE}-osnova.gz"
+    cp "${WORKDIR}/debian-installer/amd64/linux" "/boot/vmlinuz-debian${RELEASE}-osnova"
 
     KERNEL_PATH="/boot/vmlinuz-debian${RELEASE}-osnova"
     INITRD_PATH="/boot/initrd-debian${RELEASE}-osnova.gz"
@@ -992,7 +1010,6 @@ PRESEEDTAILEOF
     fi
     KERNEL_APPEND="auto=true priority=critical file=/preseed.cfg locale=en_US.UTF-8 keymap=us hostname=debian domain=localdomain ${NET_APPEND} ${MIRROR_APPEND} ${IPV6_APPEND} vga=788 --- quiet"
     GRUB_TITLE="OsNova-Debian${RELEASE}"
-    UBUNTU_CLOUD=0
 }
 
 # ==============================================================================
@@ -1074,8 +1091,8 @@ install_ubuntu() {
         rm -f "${IMG_PATH}"
         # Map partitions by offset from the partition table (no reliance on
         # udev creating partition nodes).
-        local nr start sectors fstype dev best_size=0
-        while read -r nr start sectors; do
+        local start sectors fstype dev best_size=0
+        while read -r _ start sectors; do
             fstype=$(blkid -p -O $((start * 512)) -o export "${RAW_PATH}" 2>/dev/null | sed -n 's/^TYPE=//p')
             case "$fstype" in
                 ext4|vfat)
@@ -1228,7 +1245,6 @@ EOF
     fi
     sync
     GRUB_TITLE=""
-    UBUNTU_CLOUD=1
 }
 
 # Write the prepared image over the live system disk and reboot at once.
@@ -1246,7 +1262,7 @@ ubuntu_write_and_reboot() {
         mount -o remount,ro / 2>/dev/null || \
             echo -e "${YELLOW}Warning: could not remount / read-only; continuing.${NC}"
     fi
-    qemu-img convert -f "${WRITE_FMT}" -O raw -p "${WRITE_SRC}" "${REAL_DISK}"
+    write_image "${WRITE_SRC}" "${WRITE_FMT}" "${REAL_DISK}"
     blockdev --flushbufs "${REAL_DISK}" 2>/dev/null || true
     # Move the GPT backup header to the real end of the (larger) disk.
     sgdisk -e "${REAL_DISK}" >/dev/null 2>&1 || true
@@ -1336,6 +1352,7 @@ EOF
             "$MKCONFIG" -o "$c"; GRUB_CFGS="$GRUB_CFGS $c"
         done
     fi
+    # shellcheck disable=SC2086  # one argument per config file
     if [ -z "$GRUB_CFGS" ] || ! grep -qs "menuentry '${GRUB_TITLE}'" $GRUB_CFGS; then
         echo -e "${RED}Error: the installer entry did not make it into the GRUB configuration.${NC}"
         echo -e "${YELLOW}The disk has NOT been erased; the current system keeps booting normally.${NC}"

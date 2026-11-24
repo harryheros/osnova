@@ -1,11 +1,28 @@
 # OsNova Changelog
 
-### v2.3.1
+Releases, newest first.
+
+## 2.3.2 (2026-11-23)
+
+- **Ubuntu: safer final write on small hosts.** The cloud image is written
+  over the same disk that holds the downloaded image file, so that file has
+  to be read from memory, not from blocks the write has already replaced.
+  The write now uses direct I/O, which keeps the gigabytes being written out
+  of the page cache so they cannot push the image file out of memory, and
+  the file is read once beforehand so it starts out cached. Disks that
+  refuse direct I/O get the previous buffered write.
+- Offline tests (`tests/test_reinstall.sh`) for the address, route, disk and
+  password helpers, the image write, the version and this changelog; a CI
+  workflow runs them with `bash -n` and ShellCheck on every push.
+- The script is ShellCheck-clean; changelog headings carry release dates.
+- No changes to options or defaults.
+
+## 2.3.1 (2026-11-03)
 
 - Shorter README; the release history moved to `CHANGELOG.md`.
 - No changes to installation behaviour.
 
-### v2.3.0
+## 2.3.0 (2026-09-25)
 
 Fixes for installations that failed on some providers / source systems:
 
@@ -35,7 +52,7 @@ Updates:
 - Ubuntu images are verified against Ubuntu's published SHA256SUMS.
 - New option `--disk /dev/XXX`.
 
-### v2.2.0
+## 2.2.0 (2026-06-15)
 
 - Fixed Debian installer hang at "Loading additional components / Retrieving *.udeb" on hosts with broken IPv6: the script now probes actual IPv6 reachability and, if an address is present but unroutable (common on budget VPS), disables IPv6 for both the installer (`ipv6.disable=1` on the kernel cmdline) and the installed system — degrading cleanly to IPv4-only. Hosts with working IPv6 keep full dual-stack; IPv4-only hosts are unaffected
 - Fixed Debian installer hang by adding an explicit mirror block (`mirror/http/hostname`, `directory`, `suite`) to both the preseed and the kernel command line — previously no mirror was specified, so the installer had no host to fetch udebs from
@@ -47,7 +64,7 @@ Updates:
 - Switched GRUB default selection to the canonical `GRUB_DEFAULT=saved` + `grub-set-default`/`grub-reboot` method and forced `GRUB_DISABLE_SUBMENU=y`, so the installer entry boots reliably even when GRUB builds a submenu
 - No user-facing CLI changes — fully compatible with v2.1.0 invocation
 
-### v2.1.0
+## 2.1.0 (2026-05-26)
 
 - Fixed network detection on hosts with multi-IP interfaces (cloud VPS with main IP + alias addresses)
 - Fixed mixed IPv4/IPv6 default routes pointing at different interfaces (`ip -4` / `ip -6` now used explicitly)
@@ -60,23 +77,23 @@ Updates:
 - Refactored systemd-networkd IPv6 block to use a single pre-built string instead of nested heredoc-in-command-substitution
 - No user-facing CLI changes — fully compatible with v2.0.0 invocation
 
-### v2.0.0
+## 2.0.0 (2026-03-31)
 
-- Added root privilege and x86_64 architecture pre-checks  
-- Added interactive confirmation prompt before disk erasure (`--force` to skip)  
-- Added `--version` / `-v` parameter  
-- Added password validation to reject shell-unsafe characters  
-- Upgraded random password generation to 20 characters with symbols  
-- Fixed preseed password injection to prevent shell expansion issues  
-- Fixed SSH port configuration to reliably write Port even when missing from sshd_config  
-- Fixed GRUB_DISABLE_OS_PROBER repeated append (now idempotent)  
-- Fixed disk detection fallback to exclude loop, nbd, ram, and zram devices  
-- Added Ubuntu cloud image integrity verification via qemu-img check  
-- Added IPv6 /128 on-link route support for both Debian and Ubuntu paths  
-- Improved cleanup trap to cover HUP/PIPE signals and temporary work directory  
-- Debian BBR configuration moved to dedicated sysctl.d file  
-- Debian SSH configuration now uses sshd_config.d override for reliability  
+- Added root privilege and x86_64 architecture pre-checks
+- Added interactive confirmation prompt before disk erasure (`--force` to skip)
+- Added `--version` / `-v` parameter
+- Added password validation to reject shell-unsafe characters
+- Upgraded random password generation to 20 characters with symbols
+- Fixed preseed password injection to prevent shell expansion issues
+- Fixed SSH port configuration to reliably write Port even when missing from sshd_config
+- Fixed GRUB_DISABLE_OS_PROBER repeated append (now idempotent)
+- Fixed disk detection fallback to exclude loop, nbd, ram, and zram devices
+- Added Ubuntu cloud image integrity verification via qemu-img check
+- Added IPv6 /128 on-link route support for both Debian and Ubuntu paths
+- Improved cleanup trap to cover HUP/PIPE signals and temporary work directory
+- Debian BBR configuration moved to dedicated sysctl.d file
+- Debian SSH configuration now uses sshd_config.d override for reliability
 
-### v1.0.0
+## 1.0.0 (2026-03-25)
 
 - Initial release

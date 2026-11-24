@@ -1,0 +1,21 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Offline tests (bash -n, ShellCheck, helpers, version, changelog)
+        run: |
+          shellcheck --version
+          bash tests/test_reinstall.sh
