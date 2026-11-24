@@ -115,7 +115,24 @@ case "$body" in *"qemu-img convert"*) fail "ubuntu_write_and_reboot calls qemu-i
 # --- Version and changelog ----------------------------------------------------
 V="$(sed -n 's/^VERSION="\(.*\)"$/\1/p' "$SCRIPT")"
 eq "$(sed -n 's/^# Version: //p' "$SCRIPT")" "$V" "header version"
-yes_ grep -q "badge/version-${V}-" "$ROOT/README.md"
+
+# --- README -------------------------------------------------------------------
+README="$ROOT/README.md"
+eq "$(head -n 3 "$README")" "$(printf '<div align="center">\n\n# OsNova')" "README header"
+yes_ grep -q 'img.shields.io/github/v/release/harryheros/osnova' "$README"
+no_  grep -q 'img.shields.io/badge/version-' "$README"   # a hand-written badge goes stale
+no_  grep -qi 'novaod' "$README"                         # a free tool: no commercial licensing
+eq "$(tail -n 1 "$README")" "Part of the [Nova infrastructure toolkit](https://github.com/harryheros)." "README last line"
+# Every #anchor link points at a heading (GitHub's slug: lowercase, spaces to
+# hyphens, punctuation dropped).
+SLUGS="$(grep -E '^#{1,6} ' "$README" | sed -E 's/^#+ //; s/`//g' | tr '[:upper:]' '[:lower:]' \
+    | sed -E 's/[^a-z0-9 _-]//g; s/ /-/g')"
+while read -r a; do
+    if grep -qxF "$a" <<<"$SLUGS"; then ok; else fail "README link #$a has no heading"; fi
+done < <(grep -oE '\]\(#[^)]+\)' "$README" | sed -E 's/^\]\(#//; s/\)$//' | sort -u)
+while read -r f; do
+    yes_ test -e "$ROOT/$f"
+done < <(grep -oE '\]\(\./[^)#]+' "$README" | sed -E 's/^\]\(\.\///' | sort -u)
 
 HEADS="$(grep '^## ' "$ROOT/CHANGELOG.md")"
 BAD="$(grep -vE '^## [0-9]+\.[0-9]+\.[0-9]+ \([0-9]{4}-[0-9]{2}-[0-9]{2}\)$' <<<"$HEADS")"

@@ -2,7 +2,7 @@
 
 Releases, newest first.
 
-## 2.3.2 (2026-11-23)
+## 2.3.2 (2026-11-24)
 
 - **Ubuntu: safer final write on small hosts.** The cloud image is written
   over the same disk that holds the downloaded image file, so that file has

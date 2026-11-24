@@ -1,11 +1,18 @@
+<div align="center">
+
 # OsNova
 
-> Deterministic OS reinstallation for VPS and bare-metal servers.
+**Deterministic OS reinstallation for VPS and bare-metal servers.**
 
-[![License](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](./LICENSE)
-[![Version](https://img.shields.io/badge/version-2.3.2-brightgreen.svg)](./CHANGELOG.md)
-[![Arch](https://img.shields.io/badge/arch-x86__64-lightgrey.svg)](#)
-[![OS Support](https://img.shields.io/badge/support-Debian%2011%2F12%2F13%20%7C%20Ubuntu%2022.04%2F24.04%2F26.04-green.svg)](#)
+[![Version](https://img.shields.io/github/v/release/harryheros/osnova?label=version&color=blue)](https://github.com/harryheros/osnova/releases)
+[![License](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](#license)
+[![CI](https://github.com/harryheros/osnova/actions/workflows/ci.yml/badge.svg)](https://github.com/harryheros/osnova/actions/workflows/ci.yml)
+[![Arch](https://img.shields.io/badge/arch-x86__64-lightgrey.svg)](#quick-start)
+[![Systems](https://img.shields.io/badge/installs-Debian%2011%2F12%2F13%20%7C%20Ubuntu%2022.04%2F24.04%2F26.04-green.svg)](#supported-systems)
+
+[Quick start](#quick-start) · [Options](#options) · [Supported systems](#supported-systems) · [How it works](#how-it-works) · [Changelog](./CHANGELOG.md) · [License](#license)
+
+</div>
 
 OsNova reinstalls Debian or Ubuntu from the running system, using only official upstream installers and images — no rescue ISO or recovery environment needed. Network settings are carried over, so the server comes back on the same IP.
 
@@ -13,8 +20,6 @@ Use only on systems you own or are authorized to manage.
 
 > [!WARNING]
 > OsNova **erases the target disk**. All data on it is permanently destroyed. The target is the disk holding the running root filesystem; every disk is listed, with the target marked, before you confirm. Ctrl+C during the final countdown aborts safely.
-
----
 
 ## Quick start
 
@@ -34,8 +39,6 @@ bash reinstall.sh -u 24 -p "YourPassword" --port 2222
 
 One-line form: `bash <(curl -fsSL https://raw.githubusercontent.com/harryheros/osnova/main/os/reinstall.sh) -d 13`
 
----
-
 ## Options
 
 | Option | Description |
@@ -53,8 +56,6 @@ Example: `bash reinstall.sh -u 24 -p "SecurePassword" --port 2222 --dns "1.1.1.1
 
 **Passwords** may use `A-Z a-z 0-9 ! @ # % ^ * _ + = . -`. Characters that break shell or installer parsing (`` $ ` " ' \ ( ) { } | & ; < > ~ `` and spaces) are rejected.
 
----
-
 ## Supported systems
 
 | Debian | Ubuntu |
@@ -65,13 +66,11 @@ Example: `bash reinstall.sh -u 24 -p "SecurePassword" --port 2222 --dns "1.1.1.1
 
 Works from Debian, Ubuntu and RHEL-family hosts (CentOS, Rocky, Alma), on BIOS and UEFI.
 
----
-
 ## How it works
 
 **Debian**: downloads the official netboot installer, adds an automated preseed, boots into it once through a temporary GRUB entry, and installs unattended.
 
-**Ubuntu**: downloads the official cloud image, verifies it against Ubuntu's `SHA256SUMS`, configures it (password, SSH, network, DNS), then writes it to disk and reboots.
+**Ubuntu**: downloads the official cloud image, verifies it against Ubuntu's `SHA256SUMS`, configures it (password, SSH, network, DNS), then writes it over the disk with direct I/O and reboots.
 
 Both paths:
 
@@ -85,10 +84,8 @@ Tested on KVM virtual machines and common cloud VPS providers, BIOS and UEFI.
 
 Release history: [CHANGELOG.md](./CHANGELOG.md).
 
----
-
 ## License
 
-[GPL-3.0](./LICENSE).
+[GPL-3.0](./LICENSE): free to use, modify and share; modified versions you distribute stay under GPL-3.0.
 
 Part of the [Nova infrastructure toolkit](https://github.com/harryheros).
